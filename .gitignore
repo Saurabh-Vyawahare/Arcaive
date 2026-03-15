@@ -6,7 +6,6 @@
 __pycache__/
 *.py[cod]
 *$py.class
-*.so
 venv/
 .venv/
 *.egg-info/
@@ -15,8 +14,9 @@ build/
 
 # Node
 node_modules/
+frontend/node_modules/
 .next/
-dist/
+frontend/dist/
 
 # Uploads
 uploads/
@@ -26,6 +26,8 @@ uploads/
 .vscode/
 .idea/
 *.swp
-*.swo
 .DS_Store
 Thumbs.db
+
+# Poetry
+poetry.lock
