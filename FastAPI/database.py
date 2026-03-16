@@ -109,3 +109,10 @@ def get_user_documents(user_id: str) -> list[dict]:
         .order("created_at", desc=True) \
         .execute()
     return result.data or []
+
+
+def delete_document(doc_id: str) -> bool:
+    """Delete a document from the database."""
+    db = get_supabase()
+    db.table("documents").delete().eq("id", doc_id).execute()
+    return True

@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { FileText, Loader2, RefreshCw, ChevronRight, Search } from 'lucide-react';
+import { FileText, Loader2, RefreshCw, ChevronRight, Search, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -224,6 +224,19 @@ export default function Documents() {
     if (doc.status === 'indexed') fetchTree(doc.id);
   };
 
+  const deleteDoc = async (e, docId) => {
+    e.stopPropagation();
+    if (!confirm('Delete this document?')) return;
+    try {
+      await fetch(`${API}/documents/${docId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      if (activeDoc?.id === docId) { setActiveDoc(null); setTree(null); }
+      fetchDocs();
+    } catch (err) { console.error(err); }
+  };
+
   const renderSidebarTree = () => {
     if (!tree) return null;
     const nodes = tree.structure || tree.nodes || (Array.isArray(tree) ? tree : [tree]);
@@ -256,14 +269,19 @@ export default function Documents() {
           ) : (
             docs.map(d => (
               <div key={d.id} onClick={() => selectDoc(d)}
-                className={`p-2.5 rounded-lg mb-1.5 cursor-pointer border transition-all ${
+                className={`group p-2.5 rounded-lg mb-1.5 cursor-pointer border transition-all relative ${
                   activeDoc?.id === d.id ? 'border-brand-blue bg-blue-50/50' : 'border-gray-200 hover:border-gray-300'
                 }`}>
                 <div className="flex justify-between items-center">
                   <span className={`text-xs font-medium truncate ${activeDoc?.id === d.id ? 'text-brand-blue' : 'text-gray-800'}`}>{d.filename}</span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full flex-shrink-0 ml-2 font-medium ${
-                    d.status === 'indexed' ? 'bg-green-50 text-green-600' : d.status === 'processing' ? 'bg-yellow-50 text-yellow-600' : 'bg-red-50 text-red-500'
-                  }`}>{d.status}</span>
+                  <div className="flex items-center gap-1.5 flex-shrink-0 ml-2">
+                    <button onClick={(e) => deleteDoc(e, d.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-0.5 rounded hover:bg-red-50" title="Delete">
+                      <Trash2 className="w-3 h-3 text-red-400 hover:text-red-600" />
+                    </button>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      d.status === 'indexed' ? 'bg-green-50 text-green-600' : d.status === 'processing' ? 'bg-yellow-50 text-yellow-600' : 'bg-red-50 text-red-500'
+                    }`}>{d.status}</span>
+                  </div>
                 </div>
                 {d.pages > 0 && <div className="font-mono text-[10px] text-gray-400 mt-1">{d.pages} pages</div>}
               </div>

@@ -28,6 +28,7 @@ from database import (
     update_document_status,
     get_document_by_id,
     get_user_documents,
+    delete_document,
 )
 from pageindex_service import generate_tree, count_pdf_pages
 
@@ -139,3 +140,21 @@ async def get_tree(doc_id: str, user: UserInDB = Depends(get_current_user)):
         "pages": doc["pages"],
         "tree": doc["tree_json"],
     }
+
+
+@router.delete("/{doc_id}")
+async def remove_document(doc_id: str, user: UserInDB = Depends(get_current_user)):
+    """Delete a document and its PDF from disk."""
+    doc = get_document_by_id(doc_id)
+    if not doc or doc["user_id"] != user.id:
+        raise HTTPException(status_code=404, detail="Document not found")
+
+    # Delete PDF from disk
+    pdf_path = Path(settings.UPLOAD_DIR) / user.id / f"{doc_id}.pdf"
+    if pdf_path.exists():
+        pdf_path.unlink()
+
+    # Delete from database
+    delete_document(doc_id)
+
+    return {"message": "Document deleted", "doc_id": doc_id}

@@ -19,12 +19,6 @@ const SAMPLE_DOCS = [
     url: 'https://raw.githubusercontent.com/Saurabh-Vyawahare/Arcaive/main/sample_data/fia_2026_f1_regulations.pdf',
     icon: '🏁',
   },
-  {
-    name: 'Q1 FY25 Earnings Report',
-    description: 'Walt Disney Company • 5 pages • Quick demo',
-    url: 'https://raw.githubusercontent.com/Saurabh-Vyawahare/Arcaive/main/sample_data/q1-fy25-earnings.pdf',
-    icon: '📊',
-  },
 ];
 
 export default function Upload() {

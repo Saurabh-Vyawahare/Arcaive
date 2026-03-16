@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
-import { FileText, Search, Layers, TreePine, Upload, ArrowRight, Loader2 } from 'lucide-react';
+import { FileText, Search, Layers, TreePine, Upload, ArrowRight, Loader2, Trash2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
@@ -29,6 +29,18 @@ export default function Dashboard() {
   const indexed = docs.filter(d => d.status === 'indexed');
   const processing = docs.filter(d => d.status === 'processing');
   const totalPages = indexed.reduce((sum, d) => sum + (d.pages || 0), 0);
+
+  const deleteDoc = async (e, docId) => {
+    e.preventDefault();
+    if (!confirm('Delete this document?')) return;
+    try {
+      await fetch(`${API}/documents/${docId}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${token}` },
+      });
+      setDocs(docs.filter(d => d.id !== docId));
+    } catch (err) { console.error(err); }
+  };
 
   const stats = [
     { label: 'Documents', value: docs.length, sub: `${indexed.length} indexed`, icon: FileText, color: 'text-brand-blue' },
@@ -83,7 +95,7 @@ export default function Dashboard() {
             ) : (
               <div className="grid grid-cols-2 gap-3">
                 {docs.slice(0, 4).map(d => (
-                  <Card key={d.id} className="p-4 flex items-center justify-between hover:shadow-md transition-all">
+                  <Card key={d.id} className="group p-4 flex items-center justify-between hover:shadow-md transition-all">
                     <div className="flex items-center gap-3 min-w-0">
                       <FileText className="w-5 h-5 text-brand-blue flex-shrink-0" />
                       <div className="min-w-0">
@@ -93,13 +105,16 @@ export default function Dashboard() {
                         </div>
                       </div>
                     </div>
-                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium flex-shrink-0 ${
-                      d.status === 'indexed' ? 'bg-green-50 text-green-600' :
-                      d.status === 'processing' ? 'bg-yellow-50 text-yellow-600' :
-                      'bg-red-50 text-red-500'
-                    }`}>
-                      {d.status}
-                    </span>
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      <button onClick={(e) => deleteDoc(e, d.id)} className="opacity-0 group-hover:opacity-100 transition-opacity p-1 rounded hover:bg-red-50" title="Delete">
+                        <Trash2 className="w-3.5 h-3.5 text-red-400 hover:text-red-600" />
+                      </button>
+                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                        d.status === 'indexed' ? 'bg-green-50 text-green-600' :
+                        d.status === 'processing' ? 'bg-yellow-50 text-yellow-600' :
+                        'bg-red-50 text-red-500'
+                      }`}>{d.status}</span>
+                    </div>
                   </Card>
                 ))}
               </div>
