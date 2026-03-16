@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { FileText, Loader2, RefreshCw } from 'lucide-react';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function TreeNode({ node, depth = 0, selected, select }) {
   const [expanded, setExpanded] = useState(depth < 2);

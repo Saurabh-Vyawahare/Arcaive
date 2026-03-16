@@ -3,7 +3,7 @@ import { Card } from '@/components/ui/card';
 import { FileText, Search, Layers, TreePine, Upload, ArrowRight, Loader2 } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
-const API = 'http://localhost:8000';
+const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 export default function Dashboard() {
   const username = localStorage.getItem('arcaive_username') || 'User';
