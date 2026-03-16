@@ -1,0 +1,42 @@
+[
+  {
+    "total_page_number": 5
+  },
+  {
+    "total_token": 828
+  },
+  {
+    "toc_content": null,
+    "toc_page_list": [],
+    "page_index_given_in_toc": "no"
+  },
+  {
+    "message": "len(group_texts): 1"
+  },
+  {
+    "message": "generate_toc: [{'structure': '1', 'title': '2026 CHINESE GRAND PRIX', 'physical_index': '<physical_index_1>'}, {'structure': '1.1', 'title': 'Championship Points', 'physical_index': '<physical_index_1>'}, {'structure': '1.1.1', 'title': 'Driver Total Points', 'physical_index': '<physical_index_2>'}, {'structure': '1.1.2', 'title': 'Entrant Total Points', 'physical_index': '<physical_index_4>'}]"
+  },
+  {
+    "message": "convert_physical_index_to_int: [{'structure': '1', 'title': '2026 CHINESE GRAND PRIX', 'physical_index': 1}, {'structure': '1.1', 'title': 'Championship Points', 'physical_index': 1}, {'structure': '1.1.1', 'title': 'Driver Total Points', 'physical_index': 2}, {'structure': '1.1.2', 'title': 'Entrant Total Points', 'physical_index': 4}]"
+  },
+  {
+    "mode": "process_toc_with_page_numbers",
+    "accuracy": 1.0,
+    "incorrect_results": []
+  },
+  {
+    "message": "Checking title appearance in start concurrently"
+  },
+  {
+    "message": "Response: {'thinking': \"The page_text starts with 'DRIVER TOTAL', which matches the section title 'Driver Total Points' when ignoring case and space inconsistencies.\", 'start_begin': 'yes'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The section title '2026 CHINESE GRAND PRIX' matches the beginning of the page_text '2026 CHINESE GRAND PRIX' when ignoring space inconsistencies.\", 'start_begin': 'yes'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The given section title 'Entrant Total Points' matches the beginning of the page_text when ignoring spaces, as 'ENTRANT TOTAL' is the first content in the page_text.\", 'start_begin': 'yes'}"
+  },
+  {
+    "message": "Response: {'thinking': \"The page_text starts with '2026 CHINESE GRAND PRIX' and other details before the section title 'Championship Points' appears. Therefore, the section title is not the first content in the page_text.\", 'start_begin': 'no'}"
+  }
+]
