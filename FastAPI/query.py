@@ -59,10 +59,10 @@ async def ask_question(req: QueryRequest, user: UserInDB = Depends(get_current_u
     if not tree_json:
         raise HTTPException(status_code=400, detail="No tree structure found for this document")
 
-    # Build the PDF path
+    # Build the PDF path (may not exist on cloud — that's OK if tree has text)
     pdf_path = str(Path(settings.UPLOAD_DIR) / user.id / f"{doc_id}.pdf")
     if not Path(pdf_path).exists():
-        raise HTTPException(status_code=404, detail="PDF file not found on disk")
+        pdf_path = None  # query_document will use text from tree nodes instead
 
     # ── THE CORE: Reasoning-based retrieval ───────────────
     try:

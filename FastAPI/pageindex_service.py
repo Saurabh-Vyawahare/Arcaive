@@ -178,7 +178,7 @@ def _extract_pages(pdf_path: str, start_page: int, end_page: int) -> str:
 async def query_document(
     question: str,
     tree_json: dict,
-    pdf_path: str,
+    pdf_path: str = None,
     model: str = "gpt-4o",
 ) -> dict:
     """
@@ -270,9 +270,12 @@ Return only the JSON. No other text."""
         # Get text: either from tree (if stored) or extract from PDF
         if "text" in node and node["text"]:
             context_parts.append(f"[{title}]\n{node['text']}")
-        else:
+        elif pdf_path:
             extracted = _extract_pages(pdf_path, start, end)
             context_parts.append(f"[{title}]\n{extracted}")
+        elif "summary" in node and node["summary"]:
+            # Fallback: use node summary if no PDF and no text
+            context_parts.append(f"[{title}]\n{node['summary']}")
 
     context = "\n\n".join(context_parts)
 
