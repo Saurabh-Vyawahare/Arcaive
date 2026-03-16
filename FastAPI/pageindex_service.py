@@ -287,15 +287,20 @@ Return only the JSON. No other text."""
         }
 
     # ── Step 3: Generate Answer ──────────────────────────────
-    answer_prompt = f"""Answer the question based on the provided context from a document.
-Be specific, cite page numbers when possible, and be concise.
+    answer_prompt = f"""You are Arcaive, a document intelligence assistant. Answer the question based ONLY on the provided context extracted from a document.
+
+Rules:
+- Be specific and detailed
+- Cite page numbers when available
+- If the context contains relevant information, extract and present it thoroughly
+- If the context only contains summaries, provide what you can and note that more detail is available in the full document
 
 Question: {question}
 
-Context:
-{context[:15000]}
+Context from document:
+{context[:30000]}
 
-Provide a clear, detailed answer based only on the context provided."""
+Provide a comprehensive answer based on the context provided."""
 
     answer = await _call_llm(answer_prompt, model)
 
