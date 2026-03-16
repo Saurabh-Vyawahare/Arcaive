@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 import Landing from './pages/Landing';
 import Auth from './pages/Auth';
+import Docs from './pages/Docs';
+import Pricing from './pages/Pricing';
 import Dashboard from './pages/Dashboard';
 import Documents from './pages/Documents';
 import Query from './pages/Query';
@@ -23,6 +25,8 @@ function App() {
         {/* Public routes */}
         <Route path="/" element={<Landing />} />
         <Route path="/auth" element={<Auth />} />
+        <Route path="/docs" element={<Docs />} />
+        <Route path="/pricing" element={<Pricing />} />
 
         {/* Protected routes */}
         <Route path="/dashboard" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
