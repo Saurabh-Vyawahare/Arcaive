@@ -177,7 +177,7 @@ export default function Landing() {
 
           {/* Footer */}
           <div className="relative z-10 text-center pb-8">
-            <p className="text-xs" style={{ color: isDark ? '#525D72' : '#8B95A8' }}>© 2025 Arcaive. Powered by PageIndex.</p>
+            <p className="text-xs" style={{ color: isDark ? '#525D72' : '#8B95A8' }}>© 2026 Arcaive. Powered by PageIndex.</p>
           </div>
         </div>
       )}
