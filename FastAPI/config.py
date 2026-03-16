@@ -2,6 +2,7 @@
 
 from pydantic_settings import BaseSettings
 from pathlib import Path
+import os
 
 
 class Settings(BaseSettings):
@@ -9,8 +10,8 @@ class Settings(BaseSettings):
     SUPABASE_URL: str = ""
     SUPABASE_KEY: str = ""
 
-    # ── PageIndex ──────────────────────────────────────────
-    PAGEINDEX_API_KEY: str = ""
+    # ── OpenAI (used by PageIndex for tree generation + queries)
+    CHATGPT_API_KEY: str = ""
 
     # ── JWT ────────────────────────────────────────────────
     JWT_SECRET_KEY: str = "arcaive-dev-secret-change-in-production"
@@ -23,8 +24,7 @@ class Settings(BaseSettings):
     FRONTEND_URL: str = "http://localhost:3000"
 
     # ── Storage ────────────────────────────────────────────
-    STORAGE_TYPE: str = "local"
-    LOCAL_UPLOAD_DIR: str = "./uploads"
+    UPLOAD_DIR: str = "./uploads"
 
     model_config = {
         "env_file": str(Path(__file__).resolve().parent.parent / ".env"),
@@ -34,4 +34,10 @@ class Settings(BaseSettings):
 
 
 settings = Settings()
-Path(settings.LOCAL_UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+
+# Ensure upload dir exists
+Path(settings.UPLOAD_DIR).mkdir(parents=True, exist_ok=True)
+
+# Set OpenAI key as environment variable (PageIndex reads from env)
+if settings.CHATGPT_API_KEY:
+    os.environ["CHATGPT_API_KEY"] = settings.CHATGPT_API_KEY
