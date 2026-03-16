@@ -5,13 +5,24 @@ from pathlib import Path
 
 
 class Settings(BaseSettings):
+    # ── Supabase ───────────────────────────────────────────
+    SUPABASE_URL: str = ""
+    SUPABASE_KEY: str = ""
+
+    # ── PageIndex ──────────────────────────────────────────
     PAGEINDEX_API_KEY: str = ""
+
+    # ── JWT ────────────────────────────────────────────────
     JWT_SECRET_KEY: str = "arcaive-dev-secret-change-in-production"
     JWT_ALGORITHM: str = "HS256"
     JWT_EXPIRATION_MINUTES: int = 1440
+
+    # ── Server ─────────────────────────────────────────────
     BACKEND_HOST: str = "0.0.0.0"
     BACKEND_PORT: int = 8000
     FRONTEND_URL: str = "http://localhost:3000"
+
+    # ── Storage ────────────────────────────────────────────
     STORAGE_TYPE: str = "local"
     LOCAL_UPLOAD_DIR: str = "./uploads"
 

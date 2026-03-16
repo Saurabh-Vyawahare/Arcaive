@@ -1,21 +1,22 @@
 """
-Arcaive — Authentication
-JWT auth with bcrypt password hashing.
-In-memory user store for now — swap to Supabase/PostgreSQL later.
+Arcaive — Authentication (Supabase PostgreSQL)
+
+WHAT CHANGED FROM IN-MEMORY VERSION:
+  Before:  users_db = {}  (dies on restart)
+  Now:     database.py → Supabase PostgreSQL (persists forever)
+
+Everything else is identical — JWT, bcrypt, endpoints, dependencies.
 """
 
-from fastapi import APIRouter, HTTPException, Depends, status
+from fastapi import APIRouter, HTTPException, Depends
 from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from datetime import datetime, timedelta, timezone
 from jose import jwt, JWTError
 from passlib.context import CryptContext
-import uuid
 
 from config import settings
-from models import (
-    RegisterRequest, LoginRequest, TokenResponse,
-    UserInDB, UserResponse,
-)
+from models import RegisterRequest, LoginRequest, TokenResponse, UserInDB, UserResponse
+from database import create_user, get_user_by_username, get_user_by_email, get_user_by_id
 
 router = APIRouter(prefix="/auth", tags=["Authentication"])
 
@@ -45,12 +46,6 @@ def decode_token(token: str) -> dict | None:
     except JWTError:
         return None
 
-# ── In-Memory User Store ─────────────────────────────────────
-# Key = user_id, Value = UserInDB
-users_db: dict[str, UserInDB] = {}
-username_index: dict[str, str] = {}  # username → user_id
-email_index: dict[str, str] = {}     # email → user_id
-
 # ── Dependency: Get Current User ─────────────────────────────
 async def get_current_user(
     credentials: HTTPAuthorizationCredentials = Depends(security),
@@ -58,59 +53,61 @@ async def get_current_user(
     payload = decode_token(credentials.credentials)
     if not payload:
         raise HTTPException(status_code=401, detail="Invalid or expired token")
-    user = users_db.get(payload.get("sub"))
-    if not user:
+    user_id = payload.get("sub")
+    if not user_id:
+        raise HTTPException(status_code=401, detail="Invalid token payload")
+
+    user_data = get_user_by_id(user_id)
+    if not user_data:
         raise HTTPException(status_code=401, detail="User not found")
-    return user
+
+    return UserInDB(
+        id=user_data["id"],
+        username=user_data["username"],
+        email=user_data["email"],
+        hashed_password=user_data["hashed_password"],
+        created_at=user_data["created_at"],
+    )
+
 
 # ── Endpoints ────────────────────────────────────────────────
 
 @router.post("/register", status_code=201)
 async def register(req: RegisterRequest):
-    """Create a new account."""
-    if req.username.lower() in username_index:
+    """Create a new account → stores in Supabase PostgreSQL."""
+    if get_user_by_username(req.username.strip()):
         raise HTTPException(status_code=409, detail="Username already taken")
-    if req.email.lower() in email_index:
+    if get_user_by_email(req.email.strip()):
         raise HTTPException(status_code=409, detail="Email already registered")
 
-    user_id = str(uuid.uuid4())
-    user = UserInDB(
-        id=user_id,
-        username=req.username.strip(),
-        email=req.email.lower().strip(),
-        hashed_password=hash_password(req.password),
-        created_at=datetime.now(timezone.utc),
-    )
-    users_db[user_id] = user
-    username_index[user.username.lower()] = user_id
-    email_index[user.email] = user_id
-
-    return {"message": "Account created successfully", "username": user.username}
+    try:
+        user_data = create_user(
+            username=req.username.strip(),
+            email=req.email.lower().strip(),
+            hashed_password=hash_password(req.password),
+        )
+        return {"message": "Account created successfully", "username": user_data["username"]}
+    except Exception as e:
+        error_msg = str(e)
+        if "duplicate" in error_msg.lower() or "unique" in error_msg.lower():
+            raise HTTPException(status_code=409, detail="Username or email already exists")
+        raise HTTPException(status_code=500, detail=f"Registration failed: {error_msg}")
 
 
 @router.post("/login", response_model=TokenResponse)
 async def login(req: LoginRequest):
-    """Login and get JWT token."""
-    user_id = username_index.get(req.username.lower())
-    if not user_id:
+    """Login → verify password → return JWT token."""
+    user_data = get_user_by_username(req.username.strip())
+    if not user_data:
+        raise HTTPException(status_code=401, detail="Invalid username or password")
+    if not verify_password(req.password, user_data["hashed_password"]):
         raise HTTPException(status_code=401, detail="Invalid username or password")
 
-    user = users_db[user_id]
-    if not verify_password(req.password, user.hashed_password):
-        raise HTTPException(status_code=401, detail="Invalid username or password")
-
-    token = create_token(user_id)
-    return TokenResponse(
-        access_token=token,
-        username=user.username,
-        email=user.email,
-    )
+    token = create_token(user_data["id"])
+    return TokenResponse(access_token=token, username=user_data["username"], email=user_data["email"])
 
 
 @router.get("/me", response_model=UserResponse)
 async def get_me(user: UserInDB = Depends(get_current_user)):
     """Get current user profile."""
-    return UserResponse(
-        id=user.id, username=user.username,
-        email=user.email, created_at=user.created_at,
-    )
+    return UserResponse(id=user.id, username=user.username, email=user.email, created_at=user.created_at)
