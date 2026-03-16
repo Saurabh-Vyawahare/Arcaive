@@ -5,6 +5,21 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function ChatMessage({ m }) {
   const isUser = m.role === 'user';
+
+  // Simple markdown: **bold**, *italic*, newlines
+  const renderMarkdown = (text) => {
+    if (!text) return null;
+    const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
+    return parts.map((part, i) => {
+      if (part.startsWith('**') && part.endsWith('**')) {
+        return <strong key={i}>{part.slice(2, -2)}</strong>;
+      }
+      if (part.startsWith('*') && part.endsWith('*')) {
+        return <em key={i}>{part.slice(1, -1)}</em>;
+      }
+      return <span key={i}>{part}</span>;
+    });
+  };
   return (
     <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} mb-5`}>
       <div className="flex items-center gap-1.5 mb-1">
@@ -20,7 +35,7 @@ function ChatMessage({ m }) {
           ? 'bg-brand-blue text-white rounded-2xl rounded-br-sm'
           : 'bg-gray-50 text-gray-800 border border-gray-200 rounded-2xl rounded-bl-sm'
       }`}>
-        {m.content}
+        {renderMarkdown(m.content)}
       </div>
       {m.reasoning_path && m.reasoning_path.length > 0 && (
         <div className="mt-2 max-w-[85%] p-2.5 bg-blue-50/60 border border-gray-200 rounded-lg">
