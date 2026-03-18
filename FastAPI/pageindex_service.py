@@ -49,44 +49,52 @@ logger = logging.getLogger(__name__)
 # Takes a PDF file → returns hierarchical tree JSON
 # ═══════════════════════════════════════════════════════════════
 
-def generate_tree(pdf_path: str, model: str = "gpt-4o") -> dict:
+def generate_tree(pdf_path: str, model: str = None) -> dict:
     """
     Generate a PageIndex tree structure from a PDF.
 
-    This calls the open-source PageIndex code which:
-    1. Extracts text from each page using PyMuPDF
-    2. Checks for existing table of contents
-    3. Uses GPT-4o to identify section boundaries
-    4. Builds a hierarchical tree with summaries
+    MODEL STRATEGY:
+    ───────────────
+    Tree generation = structural work (finding sections, titles, boundaries).
+    GPT-4.1 is ideal: 40% faster than GPT-4o, better instruction following
+    (87.4% vs 81%), 26% cheaper, and 1M token context.
 
-    Args:
-        pdf_path: Path to the PDF file on disk
-        model: OpenAI model to use (default gpt-4o)
-
-    Returns:
-        dict with keys: doc_name, structure (the tree)
-
-    Cost: roughly $0.01-0.05 per page depending on content density
-    Time: 30-120 seconds for a 50-page document
+    Queries use GPT-5.4 separately (configured in query_document).
     """
     logger.info(f"Starting tree generation for: {pdf_path}")
 
-    # Configure PageIndex options
-    opt = pi_config(
-        model=model,
-        toc_check_page_num=20,        # Check first 20 pages for existing TOC
-        max_page_num_each_node=10,     # Max 10 pages per tree node
-        max_token_num_each_node=20000, # Max 20K tokens per node
-        if_add_node_id="yes",          # Add unique IDs to nodes
-        if_add_node_summary="yes",     # Generate summaries for each section
-        if_add_doc_description="yes",  # Add overall document description
-        if_add_node_text="yes",        # Include extracted text in nodes (needed for query)
-    )
+    pages = count_pdf_pages(pdf_path)
+    logger.info(f"Document has {pages} pages")
 
-    # Run PageIndex — this makes multiple GPT-4o calls
+    # GPT-4.1: fastest + best instruction following for structural tasks
+    tree_model = model or "gpt-4.1"
+
+    if pages <= 50:
+        opt = pi_config(
+            model=tree_model,
+            toc_check_page_num=5,
+            max_page_num_each_node=20,
+            max_token_num_each_node=30000,
+            if_add_node_id="yes",
+            if_add_node_summary="yes",
+            if_add_doc_description="no",
+            if_add_node_text="yes",
+        )
+    else:
+        opt = pi_config(
+            model=tree_model,
+            toc_check_page_num=10,
+            max_page_num_each_node=15,
+            max_token_num_each_node=25000,
+            if_add_node_id="yes",
+            if_add_node_summary="yes",
+            if_add_doc_description="no",
+            if_add_node_text="yes",
+        )
+
     tree_structure = page_index_main(pdf_path, opt)
 
-    logger.info(f"Tree generation complete for: {pdf_path}")
+    logger.info(f"Tree generation complete for: {pdf_path} ({pages} pages)")
     return tree_structure
 
 
@@ -103,8 +111,8 @@ def count_pdf_pages(pdf_path: str) -> int:
 # Takes question + tree → finds answer via tree reasoning
 # ═══════════════════════════════════════════════════════════════
 
-async def _call_llm(prompt: str, model: str = "gpt-4o") -> str:
-    """Call OpenAI GPT-4o asynchronously."""
+async def _call_llm(prompt: str, model: str = "gpt-5.4") -> str:
+    """Call OpenAI asynchronously. Default: GPT-5.4 for queries."""
     client = openai.AsyncOpenAI(api_key=settings.CHATGPT_API_KEY)
     response = await client.chat.completions.create(
         model=model,
@@ -179,35 +187,11 @@ async def query_document(
     question: str,
     tree_json: dict,
     pdf_path: str = None,
-    model: str = "gpt-4o",
+    model: str = "gpt-5.4",
 ) -> dict:
     """
     Answer a question using reasoning-based retrieval.
-
-    THE FLOW:
-    ─────────
-    Step 1: TREE SEARCH (reasoning)
-      - Send the tree structure (titles + summaries, no text) to GPT-4o
-      - Ask: "which nodes contain the answer to this question?"
-      - GPT-4o reasons through the tree and returns node IDs
-
-    Step 2: CONTEXT EXTRACTION
-      - For each identified node, get its page range
-      - Extract actual text from those pages using PyMuPDF
-
-    Step 3: ANSWER GENERATION
-      - Send extracted text + question to GPT-4o
-      - Get the final answer
-
-    Returns:
-      {
-        "answer": "The report identifies three risk factors...",
-        "thinking": "The question asks about regulatory compliance...",
-        "reasoning_path": [
-          {"node_id": "0003", "title": "Risk Factors", "pages": "7-28"},
-          ...
-        ]
-      }
+    Uses GPT-5.4 (newest, smartest) for best accuracy + typo tolerance.
     """
     logger.info(f"Query: {question[:100]}...")
 
@@ -215,18 +199,23 @@ async def query_document(
     # Strip text from tree (only send structure for reasoning)
     tree_for_search = _strip_text_from_tree(tree_json)
 
-    search_prompt = f"""You are given a question and a tree structure of a document.
-Each node contains a node_id, title, and summary.
-Your task is to find all nodes that are likely to contain the answer to the question.
+    search_prompt = f"""You are a document retrieval expert. A user is asking a question about a document.
+Your job is to find ALL nodes in the document tree that could contain the answer.
 
-Question: {question}
+IMPORTANT RULES:
+- The user's question may contain spelling mistakes, grammatical errors, or informal language. Interpret what they MEAN, not what they literally wrote.
+- Be generous with your selection. If a node MIGHT be relevant, include it. It is better to include too many nodes than to miss the right one.
+- Look at both node titles AND summaries to determine relevance.
+- If the question is vague or broad, include all sections that could possibly relate to it.
+
+User's question: {question}
 
 Document tree structure:
 {json.dumps(tree_for_search, indent=2)}
 
-Reply in this JSON format:
+Reply in this exact JSON format:
 {{
-    "thinking": "<Your reasoning about which sections are relevant>",
+    "thinking": "<Your reasoning about what the user is asking and which sections are relevant>",
     "node_list": ["node_id_1", "node_id_2"]
 }}
 Return only the JSON. No other text."""
@@ -290,10 +279,12 @@ Return only the JSON. No other text."""
     answer_prompt = f"""You are Arcaive, a document intelligence assistant. Answer the question based ONLY on the provided context extracted from a document.
 
 Rules:
-- Be specific and detailed
-- Cite page numbers when available
-- If the context contains relevant information, extract and present it thoroughly
-- If the context only contains summaries, provide what you can and note that more detail is available in the full document
+- The user's question may contain typos, spelling mistakes, or grammatical errors. Focus on what they are trying to ask, not how they wrote it.
+- Be specific and detailed in your answer.
+- Cite page numbers when available.
+- If the context contains relevant information, extract and present it thoroughly.
+- If the context only contains summaries, provide what you can and note that more detail may be available in the full document.
+- Never say "the context does not contain information about X" if the context clearly does discuss it, even if the user's wording doesn't exactly match the document's terminology.
 
 Question: {question}
 
