@@ -1,25 +1,20 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { Link } from 'react-router-dom';
-import { Layers, Sun, Moon, Github, Linkedin, Mail } from 'lucide-react';
+import { Layers, Sun, Moon, Github, Linkedin, Mail, X, Zap } from 'lucide-react';
 
-// ─── Canvas Hooks (same as before) ──────────────────────────
+// Canvas hooks (compact)
 function useParticles(ref, active, dark) {
   useEffect(() => {
     if (!active || !ref.current) return;
     const c = ref.current, ctx = c.getContext('2d'); let id, ps = [];
     const resize = () => { c.width = c.offsetWidth * 2; c.height = c.offsetHeight * 2; ctx.scale(2, 2); };
     resize(); window.addEventListener('resize', resize);
-    class P {
-      constructor(w, h) { this.x = Math.random() * w; this.y = Math.random() * h; this.s = dark ? (Math.random() * 1.6 + 0.3) : (Math.random() * 2.2 + 0.5); this.sx = (Math.random() - 0.5) * 0.22; this.sy = (Math.random() - 0.5) * 0.22; this.op = Math.random() * 0.3 + 0.1; this.fs = Math.random() * 0.005 + 0.002; this.fd = 1; this.w = w; this.h = h; const hues = dark ? ['150,175,210', '170,190,220', '130,160,200'] : ['55,85,130', '40,70,120', '74,111,165', '30,60,110', '65,95,145']; this.hue = hues[Math.floor(Math.random() * hues.length)]; }
-      update() { this.x += this.sx; this.y += this.sy; this.op += this.fs * this.fd; if (this.op >= (dark ? 0.6 : 0.75) || this.op <= 0.05) this.fd *= -1; if (this.x < 0) this.x = this.w; if (this.x > this.w) this.x = 0; if (this.y < 0) this.y = this.h; if (this.y > this.h) this.y = 0; }
-      draw(c) { c.beginPath(); c.arc(this.x, this.y, this.s, 0, Math.PI * 2); c.fillStyle = `rgba(${this.hue},${this.op})`; c.fill(); }
-    }
+    class P { constructor(w, h) { this.x = Math.random() * w; this.y = Math.random() * h; this.s = dark ? (Math.random() * 1.6 + 0.3) : (Math.random() * 2.2 + 0.5); this.sx = (Math.random() - 0.5) * 0.22; this.sy = (Math.random() - 0.5) * 0.22; this.op = Math.random() * 0.3 + 0.1; this.fs = Math.random() * 0.005 + 0.002; this.fd = 1; this.w = w; this.h = h; const hues = dark ? ['150,175,210', '170,190,220', '130,160,200'] : ['55,85,130', '40,70,120', '74,111,165', '30,60,110', '65,95,145']; this.hue = hues[Math.floor(Math.random() * hues.length)]; } update() { this.x += this.sx; this.y += this.sy; this.op += this.fs * this.fd; if (this.op >= (dark ? 0.6 : 0.75) || this.op <= 0.05) this.fd *= -1; if (this.x < 0) this.x = this.w; if (this.x > this.w) this.x = 0; if (this.y < 0) this.y = this.h; if (this.y > this.h) this.y = 0; } draw(c) { c.beginPath(); c.arc(this.x, this.y, this.s, 0, Math.PI * 2); c.fillStyle = `rgba(${this.hue},${this.op})`; c.fill(); } }
     const w = c.offsetWidth, h = c.offsetHeight; for (let i = 0; i < (dark ? 90 : 140); i++) ps.push(new P(w, h));
     const go = () => { ctx.clearRect(0, 0, w, h); ps.forEach(p => { p.update(); p.draw(ctx); }); id = requestAnimationFrame(go); }; go();
     return () => { cancelAnimationFrame(id); window.removeEventListener('resize', resize); };
   }, [ref, active, dark]);
 }
-
 function useWavy(ref, active, dark) {
   useEffect(() => {
     if (!active || !ref.current) return;
@@ -34,7 +29,6 @@ function useWavy(ref, active, dark) {
     render(); return () => { cancelAnimationFrame(id); window.removeEventListener('resize', resize); };
   }, [ref, active, dark]);
 }
-
 function useSplashParticles(ref, active) {
   useEffect(() => {
     if (!active || !ref.current) return;
@@ -60,6 +54,7 @@ const FEATURES = [
 export default function Landing() {
   const [phase, setPhase] = useState('splash');
   const [dark, setDark] = useState(false);
+  const [showToast, setShowToast] = useState(true);
   const splashPartRef = useRef(null); const wavyRef = useRef(null); const partRef = useRef(null);
   const featuresRef = useRef(null);
 
@@ -78,7 +73,8 @@ export default function Landing() {
 
   return (
     <div className="w-full h-screen font-sans overflow-hidden relative">
-      {/* ═══ SPLASH ═══ */}
+
+      {/* Splash */}
       {(phase === 'splash' || phase === 'transition') && (
         <div className="absolute inset-0 z-[100] flex flex-col items-center justify-center" style={{ background: '#0A0E16', animation: phase === 'transition' ? 'splashZoomOut 0.9s cubic-bezier(0.4,0,0.2,1) forwards' : 'none' }}>
           <canvas ref={splashPartRef} className="absolute inset-0 w-full h-full" />
@@ -93,11 +89,48 @@ export default function Landing() {
         </div>
       )}
 
-      {/* ═══ LANDING ═══ */}
+      {/* Landing */}
       {phase === 'landing' && (
         <div className="w-full h-full relative overflow-auto" style={{ background: isDark ? '#0E121A' : '#FFFFFF', animation: 'landingFadeIn 0.6s ease forwards', transition: 'background 0.4s ease' }}>
           <canvas ref={wavyRef} className="fixed inset-0 w-full h-full z-0" />
           <canvas ref={partRef} className="fixed inset-0 w-full h-full z-[1] pointer-events-none" />
+
+          {/* v2.0 Floating Announcement Toast */}
+          {showToast && (
+            <div style={{
+              position: 'fixed', bottom: 24, right: 24, zIndex: 60,
+              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px',
+              background: isDark ? 'rgba(14,18,26,0.9)' : 'rgba(255,255,255,0.95)',
+              backdropFilter: 'blur(20px)',
+              border: `1px solid ${isDark ? 'rgba(74,111,165,0.3)' : 'rgba(74,111,165,0.15)'}`,
+              borderRadius: 14, boxShadow: '0 8px 32px rgba(74,111,165,0.15)',
+              animation: 'toastIn 0.5s cubic-bezier(0.16,1,0.3,1) 0.5s both',
+            }}>
+              <div style={{
+                width: 32, height: 32, borderRadius: 10,
+                background: 'linear-gradient(135deg, #4A6FA5, #5B82BB)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+              }}>
+                <Zap style={{ width: 16, height: 16, color: '#fff' }} />
+              </div>
+              <div style={{ flex: 1 }}>
+                <div style={{ fontSize: 13, fontWeight: 600, color: isDark ? '#fff' : '#1A1F2E' }}>
+                  Arcaive v2.0
+                </div>
+                <div style={{ fontSize: 11, color: isDark ? '#8B95A8' : '#6B7280', marginTop: 1 }}>
+                  2.5x faster trees. GPT-5.1 engine. Better UI.
+                </div>
+              </div>
+              <button onClick={() => setShowToast(false)} style={{
+                width: 24, height: 24, borderRadius: 8, border: 'none', cursor: 'pointer',
+                background: isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.04)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                color: isDark ? '#8B95A8' : '#9CA3AF',
+              }}>
+                <X style={{ width: 12, height: 12 }} />
+              </button>
+            </div>
+          )}
 
           {/* Nav */}
           <nav className="fixed top-0 left-0 right-0 z-50 flex items-center justify-between px-9 py-3.5 backdrop-blur-xl" style={{ background: isDark ? 'rgba(14,18,26,0.7)' : 'rgba(255,255,255,0.85)', borderBottom: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(0,0,0,0.06)'}` }}>
@@ -153,7 +186,7 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* ─── About / Built By ─── */}
+          {/* About */}
           <div className="relative z-10 max-w-2xl mx-auto px-9 pb-20">
             <div className="text-center p-8 rounded-2xl" style={{ background: isDark ? 'rgba(255,255,255,0.03)' : 'rgba(74,111,165,0.03)', border: `1px solid ${isDark ? 'rgba(255,255,255,0.06)' : 'rgba(74,111,165,0.08)'}` }}>
               <div className="flex items-center justify-center gap-2 mb-3">
@@ -175,9 +208,8 @@ export default function Landing() {
             </div>
           </div>
 
-          {/* Footer */}
           <div className="relative z-10 text-center pb-8">
-            <p className="text-xs" style={{ color: isDark ? '#525D72' : '#8B95A8' }}>© 2025 Arcaive. Powered by PageIndex.</p>
+            <p className="text-xs" style={{ color: isDark ? '#525D72' : '#8B95A8' }}>© 2026 Arcaive. Powered by PageIndex.</p>
           </div>
         </div>
       )}
@@ -192,6 +224,7 @@ export default function Landing() {
         @keyframes slideUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: translateY(0); } }
         @keyframes scaleIn { from { opacity: 0; transform: scale(0.92); } to { opacity: 1; transform: scale(1); } }
         @keyframes btnGlow { 0%, 100% { box-shadow: 0 0 20px rgba(74,111,165,0.12); } 50% { box-shadow: 0 0 40px rgba(74,111,165,0.28); } }
+        @keyframes toastIn { from { opacity: 0; transform: translateY(20px) scale(0.95); } to { opacity: 1; transform: translateY(0) scale(1); } }
       `}</style>
     </div>
   );
