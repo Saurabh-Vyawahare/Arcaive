@@ -66,7 +66,8 @@ def generate_tree(pdf_path: str, model: str = None) -> dict:
     pages = count_pdf_pages(pdf_path)
     logger.info(f"Document has {pages} pages")
 
-    # GPT-5.1: 500K TPM limit (vs 30K for GPT-4.1) — eliminates rate limiting
+    # GPT-5.1: 500K TPM — no rate limiting, high accuracy
+    # Tiktoken patched in pageindex/utils.py to handle gpt-5.x models
     tree_model = model or "gpt-5.1"
 
     if pages <= 50:
