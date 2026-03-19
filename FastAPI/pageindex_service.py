@@ -71,24 +71,25 @@ def generate_tree(pdf_path: str, model: str = None) -> dict:
     tree_model = model or "gpt-5.1"
 
     if pages <= 50:
+        # SPEED MODE: skip summaries (saves ~8 sec), use text previews for queries instead
+        opt = pi_config(
+            model=tree_model,
+            toc_check_page_num=3,
+            max_page_num_each_node=25,
+            max_token_num_each_node=35000,
+            if_add_node_id="yes",
+            if_add_node_summary="no",       # Skip — queries use text previews instead
+            if_add_doc_description="no",
+            if_add_node_text="yes",          # Keep full text for accurate retrieval
+        )
+    else:
         opt = pi_config(
             model=tree_model,
             toc_check_page_num=5,
             max_page_num_each_node=20,
             max_token_num_each_node=30000,
             if_add_node_id="yes",
-            if_add_node_summary="yes",
-            if_add_doc_description="no",
-            if_add_node_text="yes",
-        )
-    else:
-        opt = pi_config(
-            model=tree_model,
-            toc_check_page_num=10,
-            max_page_num_each_node=15,
-            max_token_num_each_node=25000,
-            if_add_node_id="yes",
-            if_add_node_summary="yes",
+            if_add_node_summary="yes",       # Keep for large docs (worth the time)
             if_add_doc_description="no",
             if_add_node_text="yes",
         )
@@ -148,27 +149,33 @@ def _build_node_map(tree: dict | list, node_map: dict = None) -> dict:
 
 def _strip_text_from_tree(tree: dict) -> dict:
     """
-    Remove 'text' fields from tree for the search prompt.
-    We don't want to send full page text to the search step —
-    just titles and summaries so the LLM can reason about structure.
+    Prepare tree for the search prompt.
+    Instead of full text, include a SHORT PREVIEW (first 300 chars) per node.
+    This gives the LLM enough context to reason about relevance
+    without needing pre-generated summaries.
     """
     import copy
     clean = copy.deepcopy(tree)
 
-    def _remove(node):
+    def _trim(node):
         if isinstance(node, dict):
+            # If no summary exists, create a preview from text
+            if not node.get("summary") and node.get("text"):
+                text = node["text"].strip()
+                node["preview"] = text[:300] + "..." if len(text) > 300 else text
+            # Remove full text (too large for search prompt)
             node.pop("text", None)
             if "nodes" in node and node["nodes"]:
                 for child in node["nodes"]:
-                    _remove(child)
+                    _trim(child)
         elif isinstance(node, list):
             for item in node:
-                _remove(item)
+                _trim(item)
 
     if "structure" in clean:
-        _remove(clean["structure"])
+        _trim(clean["structure"])
     else:
-        _remove(clean)
+        _trim(clean)
 
     return clean
 
@@ -206,7 +213,7 @@ Your job is to find ALL nodes in the document tree that could contain the answer
 IMPORTANT RULES:
 - The user's question may contain spelling mistakes, grammatical errors, or informal language. Interpret what they MEAN, not what they literally wrote.
 - Be generous with your selection. If a node MIGHT be relevant, include it. It is better to include too many nodes than to miss the right one.
-- Look at both node titles AND summaries to determine relevance.
+- Look at node titles, summaries, AND text previews to determine relevance.
 - If the question is vague or broad, include all sections that could possibly relate to it.
 
 User's question: {question}
