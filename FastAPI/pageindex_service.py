@@ -66,8 +66,8 @@ def generate_tree(pdf_path: str, model: str = None) -> dict:
     pages = count_pdf_pages(pdf_path)
     logger.info(f"Document has {pages} pages")
 
-    # GPT-4.1: fastest + best instruction following for structural tasks
-    tree_model = model or "gpt-4.1"
+    # GPT-5.1: 500K TPM limit (vs 30K for GPT-4.1) — eliminates rate limiting
+    tree_model = model or "gpt-5.1"
 
     if pages <= 50:
         opt = pi_config(
