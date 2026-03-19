@@ -1,48 +1,50 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, FileText, Loader2, ChevronDown } from 'lucide-react';
+import { Send, FileText, Loader2, ChevronDown, Sparkles } from 'lucide-react';
 
 const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 
 function ChatMessage({ m }) {
   const isUser = m.role === 'user';
 
-  // Simple markdown: **bold**, *italic*, newlines
   const renderMarkdown = (text) => {
     if (!text) return null;
     const parts = text.split(/(\*\*.*?\*\*|\*.*?\*)/g);
     return parts.map((part, i) => {
-      if (part.startsWith('**') && part.endsWith('**')) {
-        return <strong key={i}>{part.slice(2, -2)}</strong>;
-      }
-      if (part.startsWith('*') && part.endsWith('*')) {
-        return <em key={i}>{part.slice(1, -1)}</em>;
-      }
+      if (part.startsWith('**') && part.endsWith('**')) return <strong key={i}>{part.slice(2, -2)}</strong>;
+      if (part.startsWith('*') && part.endsWith('*')) return <em key={i}>{part.slice(1, -1)}</em>;
       return <span key={i}>{part}</span>;
     });
   };
+
   return (
-    <div className={`flex flex-col ${isUser ? 'items-end' : 'items-start'} mb-5`}>
-      <div className="flex items-center gap-1.5 mb-1">
-        <div className={`w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold ${
-          isUser ? 'bg-gray-100 text-gray-500 border border-gray-200' : 'bg-brand-blue text-white'
-        }`}>{isUser ? 'U' : 'A'}</div>
-        <span className="text-[10px] font-semibold text-gray-400 uppercase tracking-wide">
+    <div style={{ marginBottom: 24, display: 'flex', flexDirection: 'column', alignItems: isUser ? 'flex-end' : 'flex-start' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}>
+        <div style={{
+          width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 10, fontWeight: 700,
+          background: isUser ? 'rgba(255,255,255,0.1)' : '#4A6FA5', color: '#fff',
+        }}>{isUser ? 'U' : 'A'}</div>
+        <span style={{ fontSize: 11, fontWeight: 600, color: 'rgba(255,255,255,0.4)', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
           {isUser ? 'You' : 'Arcaive'}
         </span>
       </div>
-      <div className={`max-w-[85%] px-4 py-3 text-sm leading-relaxed whitespace-pre-wrap ${
-        isUser
-          ? 'bg-brand-blue text-white rounded-2xl rounded-br-sm'
-          : 'bg-gray-50 text-gray-800 border border-gray-200 rounded-2xl rounded-bl-sm'
-      }`}>
+      <div style={{
+        maxWidth: '85%', padding: '14px 18px', fontSize: 14, lineHeight: 1.7, whiteSpace: 'pre-wrap',
+        borderRadius: isUser ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+        background: isUser ? '#4A6FA5' : 'rgba(255,255,255,0.06)',
+        color: '#fff', border: isUser ? 'none' : '1px solid rgba(255,255,255,0.08)',
+      }}>
         {renderMarkdown(m.content)}
       </div>
       {m.reasoning_path && m.reasoning_path.length > 0 && (
-        <div className="mt-2 max-w-[85%] p-2.5 bg-blue-50/60 border border-gray-200 rounded-lg">
-          <div className="text-[9px] font-semibold text-brand-blue uppercase tracking-wider mb-1">Reasoning Path</div>
+        <div style={{
+          marginTop: 8, maxWidth: '85%', padding: '10px 14px',
+          background: 'rgba(74,111,165,0.1)', border: '1px solid rgba(74,111,165,0.2)', borderRadius: 12,
+        }}>
+          <div style={{ fontSize: 9, fontWeight: 700, color: '#6B9FD4', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: 4 }}>Reasoning Path</div>
           {m.reasoning_path.map((step, i) => (
-            <div key={i} className="font-mono text-[10px] text-gray-600 leading-relaxed">
-              {i > 0 && '→ '}{step.node_title} {step.pages && <span className="text-gray-400">({step.pages})</span>}
+            <div key={i} style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.5)', lineHeight: 1.6 }}>
+              {i > 0 && '→ '}{step.node_title} {step.pages && <span style={{ color: 'rgba(255,255,255,0.3)' }}>({step.pages})</span>}
             </div>
           ))}
         </div>
@@ -59,30 +61,29 @@ export default function Query() {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const endRef = useRef(null);
-  const inputRef = useRef(null);
-
+  const textareaRef = useRef(null);
   const token = localStorage.getItem('arcaive_token');
 
-  // Load indexed documents
   useEffect(() => {
     (async () => {
       try {
-        const res = await fetch(`${API}/documents/`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        });
+        const res = await fetch(`${API}/documents/`, { headers: { 'Authorization': `Bearer ${token}` } });
         const data = await res.json();
         const indexed = data.filter(d => d.status === 'indexed');
         setDocs(indexed);
         if (indexed.length > 0) setSelectedDoc(indexed[0]);
-      } catch (err) {
-        console.error('Failed to load docs:', err);
-      }
+      } catch {}
     })();
   }, []);
 
+  useEffect(() => { endRef.current?.scrollIntoView({ behavior: 'smooth' }); }, [messages]);
+
   useEffect(() => {
-    endRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto';
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 200) + 'px';
+    }
+  }, [input]);
 
   const send = async () => {
     if (!input.trim() || loading || !selectedDoc) return;
@@ -90,143 +91,146 @@ export default function Query() {
     setMessages(prev => [...prev, { role: 'user', content: question }]);
     setInput('');
     setLoading(true);
-
     try {
       const res = await fetch(`${API}/query/ask`, {
         method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          question,
-          doc_id: selectedDoc.id,
-        }),
+        headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ question, doc_id: selectedDoc.id }),
       });
-
-      if (!res.ok) {
-        const err = await res.json();
-        throw new Error(err.detail || 'Query failed');
-      }
-
+      if (!res.ok) { const err = await res.json(); throw new Error(err.detail || 'Query failed'); }
       const data = await res.json();
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: data.answer,
-        reasoning_path: data.reasoning_path,
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: data.answer, reasoning_path: data.reasoning_path }]);
     } catch (err) {
-      setMessages(prev => [...prev, {
-        role: 'assistant',
-        content: `Error: ${err.message}`,
-      }]);
+      setMessages(prev => [...prev, { role: 'assistant', content: `Error: ${err.message}` }]);
     }
-
     setLoading(false);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); }
-  };
+  const handleKeyDown = (e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
 
   return (
-    <div className="flex flex-col h-full">
+    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', background: '#0f0f13', color: '#fff', fontFamily: "'DM Sans', sans-serif" }}>
+
       {/* Doc Selector Bar */}
-      <div className="px-6 py-3 border-b border-gray-200 flex items-center gap-3">
-        <FileText className="w-4 h-4 text-gray-400" />
-        <div className="relative">
-          <button
-            onClick={() => setShowDocPicker(!showDocPicker)}
-            className="flex items-center gap-2 text-sm font-medium text-gray-700 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 hover:border-brand-blue transition-all"
-          >
+      <div style={{ padding: '12px 24px', borderBottom: '1px solid rgba(255,255,255,0.06)', display: 'flex', alignItems: 'center', gap: 12 }}>
+        <FileText style={{ width: 16, height: 16, color: 'rgba(255,255,255,0.3)' }} />
+        <div style={{ position: 'relative' }}>
+          <button onClick={() => setShowDocPicker(!showDocPicker)} style={{
+            display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, fontWeight: 500,
+            color: '#fff', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)',
+            borderRadius: 10, padding: '6px 14px', cursor: 'pointer', fontFamily: "'DM Sans', sans-serif",
+          }}>
             {selectedDoc ? selectedDoc.filename : 'Select a document'}
-            <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+            <ChevronDown style={{ width: 14, height: 14, color: 'rgba(255,255,255,0.4)' }} />
           </button>
           {showDocPicker && (
-            <div className="absolute top-full left-0 mt-1 w-80 bg-white border border-gray-200 rounded-lg shadow-xl z-50 py-1 max-h-60 overflow-auto">
-              {docs.length === 0 ? (
-                <div className="px-3 py-4 text-xs text-gray-400 text-center">No indexed documents. Upload a PDF first.</div>
-              ) : (
-                docs.map(d => (
-                  <div
-                    key={d.id}
-                    onClick={() => { setSelectedDoc(d); setShowDocPicker(false); }}
-                    className={`px-3 py-2 cursor-pointer hover:bg-blue-50 transition-colors ${
-                      selectedDoc?.id === d.id ? 'bg-blue-50 text-brand-blue' : 'text-gray-700'
-                    }`}
+            <>
+              <div onClick={() => setShowDocPicker(false)} style={{ position: 'fixed', inset: 0, zIndex: 40 }} />
+              <div style={{
+                position: 'absolute', top: '100%', left: 0, marginTop: 6, width: 320, zIndex: 50,
+                background: 'rgba(26,26,30,0.95)', backdropFilter: 'blur(20px)',
+                border: '1px solid rgba(255,255,255,0.1)', borderRadius: 14, boxShadow: '0 20px 60px rgba(0,0,0,0.5)',
+                padding: 6, maxHeight: 240, overflow: 'auto',
+              }}>
+                {docs.length === 0 ? (
+                  <div style={{ padding: '16px', fontSize: 12, color: 'rgba(255,255,255,0.3)', textAlign: 'center' }}>No indexed documents. Upload a PDF first.</div>
+                ) : docs.map(d => (
+                  <div key={d.id} onClick={() => { setSelectedDoc(d); setShowDocPicker(false); }} style={{
+                    padding: '10px 14px', borderRadius: 10, cursor: 'pointer', transition: 'all 0.15s',
+                    background: selectedDoc?.id === d.id ? 'rgba(255,255,255,0.1)' : 'transparent',
+                    color: selectedDoc?.id === d.id ? '#fff' : 'rgba(255,255,255,0.6)',
+                  }}
+                    onMouseEnter={(e) => { if (selectedDoc?.id !== d.id) e.currentTarget.style.background = 'rgba(255,255,255,0.05)'; }}
+                    onMouseLeave={(e) => { if (selectedDoc?.id !== d.id) e.currentTarget.style.background = 'transparent'; }}
                   >
-                    <div className="text-sm font-medium truncate">{d.filename}</div>
-                    <div className="font-mono text-[10px] text-gray-400">{d.pages} pages</div>
+                    <div style={{ fontSize: 13, fontWeight: 500 }}>{d.filename}</div>
+                    <div style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.3)', marginTop: 2 }}>{d.pages} pages</div>
                   </div>
-                ))
-              )}
-            </div>
+                ))}
+              </div>
+            </>
           )}
         </div>
         {selectedDoc && (
-          <span className="text-[10px] font-mono text-green-600 bg-green-50 px-2 py-0.5 rounded">
+          <span style={{ fontSize: 10, fontFamily: "'JetBrains Mono', monospace", color: '#34d399', background: 'rgba(52,211,153,0.1)', padding: '3px 10px', borderRadius: 20 }}>
             {selectedDoc.pages} pages indexed
           </span>
         )}
       </div>
 
-      {/* Messages */}
-      <div className="flex-1 overflow-auto px-6 py-5">
+      {/* Messages Area */}
+      <div style={{ flex: 1, overflow: 'auto', padding: '24px 24px' }}>
         {messages.length === 0 && (
-          <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="text-4xl mb-4">🧠</div>
-            <h2 className="font-serif text-xl text-gray-900 mb-2">Ask anything about your documents</h2>
-            <p className="text-sm text-gray-500 max-w-sm">
-              Arcaive uses reasoning-based retrieval. The LLM thinks through the document tree to find precise answers with full traceability.
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', textAlign: 'center' }}>
+            <Sparkles style={{ width: 40, height: 40, color: 'rgba(74,111,165,0.5)', marginBottom: 16 }} />
+            <h2 style={{ fontFamily: "'Playfair Display', Georgia, serif", fontSize: 24, color: '#fff', marginBottom: 8, fontWeight: 500 }}>
+              What do you want to know?
+            </h2>
+            <p style={{ fontSize: 14, color: 'rgba(255,255,255,0.35)', maxWidth: 400 }}>
+              Ask anything about your documents. Arcaive reasons through the document tree to find precise answers with full traceability.
             </p>
           </div>
         )}
         {messages.map((m, i) => <ChatMessage key={i} m={m} />)}
         {loading && (
-          <div className="flex items-center gap-2 py-2">
-            <div className="w-5 h-5 rounded-full bg-brand-blue flex items-center justify-center">
-              <Loader2 className="w-3 h-3 text-white animate-spin" />
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '8px 0' }}>
+            <div style={{ width: 24, height: 24, borderRadius: '50%', background: '#4A6FA5', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <Loader2 style={{ width: 12, height: 12, color: '#fff', animation: 'spin 1s linear infinite' }} />
             </div>
-            <span className="font-mono text-[10px] text-gray-400">Reasoning through document tree...</span>
+            <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 11, color: 'rgba(255,255,255,0.3)' }}>Reasoning through document tree...</span>
           </div>
         )}
         <div ref={endRef} />
       </div>
 
-      {/* Input */}
-      <div className="border-t border-gray-200 px-6 py-4">
+      {/* Input Area */}
+      <div style={{ padding: '16px 24px 20px' }}>
         {!selectedDoc && (
-          <div className="text-xs text-center text-amber-600 bg-amber-50 rounded-lg py-2 mb-3">
+          <div style={{ textAlign: 'center', fontSize: 12, color: '#f59e0b', background: 'rgba(245,158,11,0.1)', borderRadius: 10, padding: '8px 0', marginBottom: 12, border: '1px solid rgba(245,158,11,0.15)' }}>
             Select a document above to start querying
           </div>
         )}
-        <div className="flex items-end gap-2 bg-gray-50 rounded-xl border border-gray-200 px-3 py-2.5">
-          <textarea
-            ref={inputRef}
-            value={input}
-            onChange={(e) => setInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            placeholder={selectedDoc ? "Ask about your document..." : "Select a document first"}
-            disabled={!selectedDoc}
-            rows={1}
-            className="flex-1 bg-transparent border-none text-sm text-gray-900 placeholder:text-gray-400 resize-none focus:outline-none min-h-[20px] max-h-[80px] font-sans disabled:opacity-50"
-            onInput={(e) => { e.target.style.height = 'auto'; e.target.style.height = Math.min(e.target.scrollHeight, 80) + 'px'; }}
-          />
-          <button
-            onClick={send}
-            disabled={!input.trim() || loading || !selectedDoc}
-            className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 transition-all ${
-              input.trim() && selectedDoc ? 'bg-brand-blue text-white cursor-pointer' : 'bg-gray-200 text-gray-400 cursor-default'
-            }`}
-          >
-            <Send className="w-3.5 h-3.5" />
-          </button>
+        <div style={{ position: 'relative', maxWidth: 680, margin: '0 auto' }}>
+          {/* Glow border */}
+          <div style={{ position: 'absolute', inset: -1, borderRadius: 18, background: 'linear-gradient(to bottom, rgba(255,255,255,0.08), transparent)', pointerEvents: 'none' }} />
+          <div style={{
+            position: 'relative', borderRadius: 18, background: '#1e1e22',
+            boxShadow: '0 0 0 1px rgba(255,255,255,0.05), 0 2px 20px rgba(0,0,0,0.4)',
+          }}>
+            <textarea
+              ref={textareaRef}
+              value={input} onChange={(e) => setInput(e.target.value)} onKeyDown={handleKeyDown}
+              placeholder={selectedDoc ? "Ask about your document..." : "Select a document first"}
+              disabled={!selectedDoc}
+              style={{
+                width: '100%', resize: 'none', background: 'transparent', fontSize: 15, color: '#fff',
+                padding: '18px 20px 8px', minHeight: 60, maxHeight: 200, border: 'none', outline: 'none',
+                fontFamily: "'DM Sans', sans-serif", boxSizing: 'border-box',
+                opacity: selectedDoc ? 1 : 0.4,
+              }}
+            />
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', padding: '4px 12px 12px' }}>
+              <button onClick={send} disabled={!input.trim() || loading || !selectedDoc} style={{
+                display: 'flex', alignItems: 'center', gap: 8, padding: '10px 20px', borderRadius: 14,
+                fontSize: 14, fontWeight: 600, border: 'none', cursor: input.trim() && selectedDoc ? 'pointer' : 'default',
+                background: input.trim() && selectedDoc ? '#4A6FA5' : 'rgba(255,255,255,0.06)',
+                color: input.trim() && selectedDoc ? '#fff' : 'rgba(255,255,255,0.25)',
+                transition: 'all 0.2s', fontFamily: "'DM Sans', sans-serif",
+                boxShadow: input.trim() && selectedDoc ? '0 0 24px rgba(74,111,165,0.3)' : 'none',
+              }}>
+                Ask <Send style={{ width: 14, height: 14 }} />
+              </button>
+            </div>
+          </div>
         </div>
-        <div className="flex justify-between mt-2">
-          <span className="font-mono text-[9px] text-gray-400">Powered by PageIndex • Reasoning-based RAG</span>
-          <span className="font-mono text-[9px] text-gray-400">Enter ↵</span>
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: 10 }}>
+          <span style={{ fontFamily: "'JetBrains Mono', monospace", fontSize: 10, color: 'rgba(255,255,255,0.2)' }}>
+            Powered by PageIndex · Reasoning-based RAG · Enter ↵
+          </span>
         </div>
       </div>
+
+      <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
     </div>
   );
 }
