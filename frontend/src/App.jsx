@@ -8,6 +8,7 @@ import Dashboard from './pages/Dashboard';
 import Documents from './pages/Documents';
 import Query from './pages/Query';
 import Upload from './pages/Upload';
+import Settings from './pages/Settings';
 import Layout from './Layout';
 
 function ProtectedRoute({ children }) {
@@ -33,6 +34,7 @@ function App() {
         <Route path="/documents" element={<ProtectedRoute><Documents /></ProtectedRoute>} />
         <Route path="/query" element={<ProtectedRoute><Query /></ProtectedRoute>} />
         <Route path="/upload" element={<ProtectedRoute><Upload /></ProtectedRoute>} />
+        <Route path="/settings" element={<ProtectedRoute><Settings /></ProtectedRoute>} />
 
         {/* Catch all */}
         <Route path="*" element={<Navigate to="/" replace />} />

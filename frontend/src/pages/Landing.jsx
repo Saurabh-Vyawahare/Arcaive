@@ -49,7 +49,7 @@ function useSplashParticles(ref, active) {
 }
 
 const FEATURES = [
-  { icon: '🌲', title: 'Tree-Based Indexing', desc: 'Documents become intelligent hierarchies — not flat chunks.' },
+  { icon: '🌲', title: 'Tree-Based Indexing', desc: 'Documents become intelligent hierarchies, not flat chunks.' },
   { icon: '🧠', title: 'LLM Reasoning', desc: 'Thinks through the tree like a human expert.' },
   { icon: '🔍', title: 'Traceable Retrieval', desc: 'Every answer includes a full reasoning path.' },
   { icon: '⚡', title: '98.7% Accuracy', desc: 'State-of-the-art on FinanceBench.' },
@@ -177,7 +177,7 @@ export default function Landing() {
 
           {/* Footer */}
           <div className="relative z-10 text-center pb-8">
-            <p className="text-xs" style={{ color: isDark ? '#525D72' : '#8B95A8' }}>© 2026 Arcaive. Powered by PageIndex.</p>
+            <p className="text-xs" style={{ color: isDark ? '#525D72' : '#8B95A8' }}>© 2025 Arcaive. Powered by PageIndex.</p>
           </div>
         </div>
       )}

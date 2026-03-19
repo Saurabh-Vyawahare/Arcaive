@@ -67,7 +67,7 @@ export default function Pricing() {
         {/* Fine print */}
         <div className="mt-10 max-w-md text-center">
           <p className="text-xs text-gray-400 leading-relaxed">
-            Arcaive is an open-source project. Self-host it for free — you just need an OpenAI API key for GPT-4o (tree generation + queries). Supabase free tier handles the database. Railway's $5/mo free credit covers the backend.
+            Arcaive is an open-source project. Self-host it for free. You just need an OpenAI API key for GPT-5 (tree generation + queries). Supabase free tier handles the database. The Railway $5/mo free credit covers the backend.
           </p>
         </div>
       </div>

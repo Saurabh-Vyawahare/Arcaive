@@ -3,10 +3,10 @@ import { Link } from 'react-router-dom';
 import { Layers, ArrowRight, TreePine, Brain, Search, FileText, Zap, GitBranch } from 'lucide-react';
 
 const STEPS = [
-  { num: '01', icon: FileText, title: 'Upload PDF', desc: 'Drop any PDF — research papers, legal docs, financial reports, 200+ page textbooks. No size limits that matter.', color: 'bg-blue-50 text-blue-600 border-blue-200' },
-  { num: '02', icon: TreePine, title: 'Tree Generation', desc: 'PageIndex reads every page using GPT-4o and builds a hierarchical tree structure — like an intelligent table of contents with summaries at every level.', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
+  { num: '01', icon: FileText, title: 'Upload PDF', desc: 'Drop any PDF. Research papers, legal docs, financial reports, 200+ page textbooks. No size limits that matter.', color: 'bg-blue-50 text-blue-600 border-blue-200' },
+  { num: '02', icon: TreePine, title: 'Tree Generation', desc: 'PageIndex reads every page using AI and builds a hierarchical tree structure, like an intelligent table of contents with summaries at every level.', color: 'bg-emerald-50 text-emerald-600 border-emerald-200' },
   { num: '03', icon: Brain, title: 'Reasoning Query', desc: 'Ask a question. The LLM reasons through the tree: "This question is about X → Section 3 covers X → Pages 12-18 have the detail." It thinks, not searches.', color: 'bg-purple-50 text-purple-600 border-purple-200' },
-  { num: '04', icon: Search, title: 'Traced Answer', desc: 'Get a precise answer with a full reasoning path — which sections were used, which pages, and WHY. Complete traceability, zero black boxes.', color: 'bg-amber-50 text-amber-600 border-amber-200' },
+  { num: '04', icon: Search, title: 'Traced Answer', desc: 'Get a precise answer with a full reasoning path showing which sections were used, which pages, and WHY. Complete traceability, zero black boxes.', color: 'bg-amber-50 text-amber-600 border-amber-200' },
 ];
 
 export default function Docs() {
@@ -34,7 +34,7 @@ export default function Docs() {
           How <span className="italic text-brand-light">Arcaive</span> works
         </h1>
         <p className="text-lg text-gray-500 leading-relaxed max-w-xl mx-auto">
-          A fundamentally different approach to document retrieval. No vectors, no embeddings, no chunking — just reasoning.
+          A fundamentally different approach to document retrieval. No vectors, no embeddings, no chunking. Just reasoning.
         </p>
       </div>
 
@@ -116,7 +116,7 @@ export default function Docs() {
           <div className="font-serif text-5xl font-medium text-brand-blue mb-3">98.7%</div>
           <div className="text-sm font-semibold text-gray-700 mb-2">Accuracy on FinanceBench</div>
           <p className="text-xs text-gray-500 leading-relaxed max-w-lg mx-auto">
-            PageIndex significantly outperforms traditional vector-based RAG on complex financial documents. The tree-reasoning approach excels at multi-hop questions that require understanding document structure — not just keyword matching.
+            PageIndex significantly outperforms traditional vector-based RAG on complex financial documents. The tree-reasoning approach excels at multi-hop questions that require understanding document structure, not just keyword matching.
           </p>
         </div>
       </div>
@@ -128,7 +128,7 @@ export default function Docs() {
           {[
             { label: 'Backend', items: 'Python • FastAPI • PageIndex' },
             { label: 'Database', items: 'Supabase PostgreSQL • JSONB' },
-            { label: 'AI', items: 'OpenAI GPT-4o • PyMuPDF' },
+            { label: 'AI', items: 'OpenAI GPT-5 Series • PyMuPDF' },
             { label: 'Frontend', items: 'React • Vite • Tailwind' },
             { label: 'Auth', items: 'JWT • bcrypt • Bearer tokens' },
             { label: 'Deploy', items: 'Railway • Vercel' },

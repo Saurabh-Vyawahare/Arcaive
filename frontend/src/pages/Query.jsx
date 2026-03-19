@@ -177,7 +177,7 @@ export default function Query() {
             <div className="text-4xl mb-4">🧠</div>
             <h2 className="font-serif text-xl text-gray-900 mb-2">Ask anything about your documents</h2>
             <p className="text-sm text-gray-500 max-w-sm">
-              Arcaive uses reasoning-based retrieval — the LLM thinks through the document tree to find precise answers with full traceability.
+              Arcaive uses reasoning-based retrieval. The LLM thinks through the document tree to find precise answers with full traceability.
             </p>
           </div>
         )}

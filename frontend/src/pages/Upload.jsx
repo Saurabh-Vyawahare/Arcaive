@@ -9,7 +9,7 @@ const API = import.meta.env.VITE_API_URL || 'http://localhost:8000';
 const SAMPLE_DOCS = [
   {
     name: "Harry Potter and the Sorcerer's Stone",
-    description: "80 pages • The boy who lived — now indexed by AI 🧙‍♂️",
+    description: "80 pages • The boy who lived, now indexed by AI 🧙‍♂️",
     url: 'https://raw.githubusercontent.com/Saurabh-Vyawahare/Arcaive/main/sample_data/harry_potter_sample.pdf',
     icon: '📖',
   },
@@ -18,6 +18,12 @@ const SAMPLE_DOCS = [
     description: "84 pages • See how Mercedes decided to get creative with compression ratios 🏎️",
     url: 'https://raw.githubusercontent.com/Saurabh-Vyawahare/Arcaive/main/sample_data/fia_2026_f1_regulations.pdf',
     icon: '🏁',
+  },
+  {
+    name: 'Q1 FY25 Earnings Report',
+    description: 'Walt Disney Company • 5 pages • Quick demo',
+    url: 'https://raw.githubusercontent.com/Saurabh-Vyawahare/Arcaive/main/sample_data/q1-fy25-earnings.pdf',
+    icon: '📊',
   },
 ];
 
@@ -129,7 +135,7 @@ export default function Upload() {
           <div className="flex flex-col items-center gap-3">
             <Loader2 className="w-8 h-8 text-brand-blue animate-spin" />
             <div className="text-sm font-medium text-gray-900">Building document tree...</div>
-            <div className="text-xs text-gray-500">PageIndex is analyzing structure with GPT-4o. This takes 30-120 seconds.</div>
+            <div className="text-xs text-gray-500">PageIndex is analyzing structure with AI. Usually takes 20-40 seconds.</div>
             <div className="font-mono text-xs text-brand-blue mt-2">Status: processing</div>
           </div>
         )}
@@ -138,7 +144,7 @@ export default function Upload() {
           <div className="flex flex-col items-center gap-3">
             <CheckCircle className="w-8 h-8 text-green-600" />
             <div className="text-sm font-medium text-gray-900">{fileName}</div>
-            <div className="text-xs text-green-600">Tree generation complete — document is ready to query!</div>
+            <div className="text-xs text-green-600">Tree generation complete! Document is ready to query!</div>
             <div className="flex gap-3 mt-4">
               <button onClick={() => navigate('/documents')} className="text-sm bg-brand-blue text-white px-5 py-2 rounded-lg font-medium hover:shadow-lg transition-all">View Tree →</button>
               <button onClick={() => navigate('/query')} className="text-sm border border-brand-blue text-brand-blue px-5 py-2 rounded-lg font-medium hover:bg-blue-50 transition-all">Ask Questions</button>
@@ -189,7 +195,7 @@ export default function Upload() {
         <div className="flex items-start gap-3">
           <FileText className="w-4 h-4 text-brand-blue mt-0.5 flex-shrink-0" />
           <div className="text-xs text-gray-600 leading-relaxed">
-            <strong className="text-gray-800">How it works:</strong> PageIndex generates a hierarchical tree structure from your document — no chunking, no embeddings. The LLM reasons through this tree to find answers with full traceability.
+            <strong className="text-gray-800">How it works:</strong> PageIndex generates a hierarchical tree structure from your document, no chunking, no embeddings. The LLM reasons through this tree to find answers with full traceability.
           </div>
         </div>
       </div>

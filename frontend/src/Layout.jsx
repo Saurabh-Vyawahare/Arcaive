@@ -83,8 +83,13 @@ const Sidebar = () => {
         <div className="flex-1" />
 
         {/* Settings */}
-        <div
-          className="flex items-center gap-3 rounded-lg text-sm text-gray-400 hover:bg-gray-100 hover:text-gray-600 cursor-pointer transition-all"
+        <Link
+          to="/settings"
+          className={`flex items-center gap-3 rounded-lg text-sm transition-all ${
+            location.pathname === '/settings'
+              ? 'bg-blue-50 text-brand-blue'
+              : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'
+          }`}
           style={{
             padding: expanded ? '10px 12px' : '10px 0',
             justifyContent: expanded ? 'flex-start' : 'center',
@@ -92,14 +97,23 @@ const Sidebar = () => {
         >
           <Settings className="w-[18px] h-[18px] flex-shrink-0" />
           {expanded && <span className="whitespace-nowrap">Settings</span>}
-        </div>
+        </Link>
       </nav>
 
       {/* User + Logout */}
       <div className="border-t border-gray-200 transition-all" style={{ padding: expanded ? '12px 14px' : '12px 0' }}>
         <div className="flex items-center gap-3 mb-2" style={{ justifyContent: expanded ? 'flex-start' : 'center' }}>
-          <div className="w-7 h-7 brand-gradient rounded-full flex items-center justify-center text-white text-xs font-bold flex-shrink-0">
-            {username[0]?.toUpperCase()}
+          <div
+            className="w-7 h-7 rounded-full flex items-center justify-center flex-shrink-0"
+            style={{
+              background: localStorage.getItem('arcaive_emoji') ? '#F0F4FA' : '#4A6FA5',
+              border: localStorage.getItem('arcaive_emoji') ? '2px solid #4A6FA5' : 'none',
+              fontSize: localStorage.getItem('arcaive_emoji') ? 14 : 11,
+              color: localStorage.getItem('arcaive_emoji') ? undefined : '#fff',
+              fontWeight: 700,
+            }}
+          >
+            {localStorage.getItem('arcaive_emoji') || username[0]?.toUpperCase()}
           </div>
           {expanded && (
             <div className="overflow-hidden">
